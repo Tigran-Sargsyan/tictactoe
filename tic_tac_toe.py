@@ -28,7 +28,7 @@ class Window(QMainWindow):
         self.initUI() # A function for the UI of the window
 
     def initUI(self):
-        # Creating buttons,setting geometry,text in the buttons,styling
+        """Creating buttons,setting geometry,text in the buttons,styling"""
 
         self.btn1 = QtWidgets.QPushButton(self) # btn1 to btn9 are the squares of the playing board
         self.btn1.setGeometry(5,10,150,100)
@@ -127,8 +127,8 @@ class Window(QMainWindow):
         self.mode1.clicked.connect(lambda: self.mode(1))
         self.mode2.clicked.connect(lambda: self.mode(2))
 
-    # A function to determine what mode the user wants to play in
     def mode(self,game_mode):
+        """ A function to determine what mode the user wants to play in """
         self.game_mode = game_mode
         print(self.game_mode)
         self.mode1.deleteLater()
@@ -137,16 +137,16 @@ class Window(QMainWindow):
             self.random_list = list(range(9)) # For logic when playing with computer
        
     
-    # A function that is invoked when buttons are clicked
+    
     def click(self,btn,pos):
-        #print(self.game_mode)
+        """ A function that is invoked when buttons are clicked """
         if self.game_mode == 1:
             self.two_player(btn,pos) 
         elif self.game_mode == 2:
             self.vsCmp(btn,pos)    
 
-    # A function that is invoked when the game is on 2player mode and a button in the board is clicked
     def two_player(self,btn,pos):
+        """ A function that is invoked when the game is on 2player mode and a button in the board is clicked """
         if self.counter % 2 == 0:
             btn.setText("X")
             btn.setEnabled(False)
@@ -163,8 +163,8 @@ class Window(QMainWindow):
         print(self.lst)
         self.counter += 1  # incrementing the counter after each move
 
-    # A function that is invoked when the game is on vs Computer mode and a button in the board is clicked
     def vsCmp(self,btn,pos):
+        """ A function that is invoked when the game is on vs Computer mode and a button in the board is clicked"""
         btn.setText("X")
         btn.setEnabled(False)
         self.label.setText("X's turn!")
@@ -183,8 +183,8 @@ class Window(QMainWindow):
                 self.lst[pick] = "O"
                 self.win(self.lst,"O")      
 
-    # A function to check if the winning condition occured
     def win(self,lst,player):
+        """ A function to check if the winning condition occured """
         if self.check_horizontal(lst) or self.check_vertical(lst) or self.check_diagonal(lst):
             self.label.setText(f"{player} won!")
             if player == "X":
@@ -199,24 +199,24 @@ class Window(QMainWindow):
                 button.setEnabled(False)
             self.flag = False       
 
-    # Subfunction of win() which checks horizontals
     def check_horizontal(self,lst):
+        """ Subfunction of win() which checks horizontals """
         for i in range(3):
             if lst[i] == lst[i+3] == lst[i+6]:
                 self.win_lst.extend([i,i+3,i+6])
                 print(self.win_lst)
                 return True
 
-    # Subfunction of win() which checks verticals
     def check_vertical(self,lst):
+        """ Subfunction of win() which checks verticals """
         for i in range(0,7,3):
             if lst[i] == lst[i+1] == lst[i+2]:
                 self.win_lst.extend([i,i+1,i+2])
                 print(self.win_lst)
                 return True
 
-    # Subfunction of win() which checks diagonals
     def check_diagonal(self,lst):
+        """ Subfunction of win() which checks diagonals """
         if lst[0] == lst[4] == lst[8]:
             self.win_lst.extend([0,4,8])
             print(self.win_lst)
@@ -226,8 +226,8 @@ class Window(QMainWindow):
             print(self.win_lst)
             return True    
 
-    # A function that resets all the elements in the game window
     def reset(self):
+        """ A function that resets all the elements in the game window """
         for button in self.button_list:
             button.setText("")
             button.setEnabled(True)
