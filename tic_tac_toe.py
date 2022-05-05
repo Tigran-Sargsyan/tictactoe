@@ -12,6 +12,7 @@ class Window(QMainWindow):
         self.setGeometry(500,100,462,570) 
         self.setMinimumSize(462,570)
         self.setMaximumSize(462,570)
+        self.setWindowTitle("TicTacToe")
 
         self.counter = 0  # A counter to determine whose move it is
         self.flag = True  # A flag to tell if a game is still in process
