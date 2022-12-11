@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QFont
 import sys
 import random
+import numpy as np
 
 class Window(QMainWindow):
     def __init__(self):
@@ -14,11 +15,11 @@ class Window(QMainWindow):
         self.setMaximumSize(462,570)
         self.setWindowTitle("TicTacToe")
 
-        self.counter = 0  # A counter to determine whose move it is
+        self.move_counter = 0  # A counter to determine whose move it is
         self.flag = True  # A flag to tell if a game is still in process
         self.game_mode = 0 # A variable for holding the mode of the game (1: 2Player, 2:vs Computer)
 
-        self.lst = list(range(9)) # Defining a list with values [0,8] for storing X-s and O-s 
+        self.board = list(range(9)) # Defining a list with values [0,8] for storing X-s and O-s 
         
         self.win_lst = [] # Defining a list to hold the winning squares
 
@@ -128,63 +129,114 @@ class Window(QMainWindow):
         self.mode1.clicked.connect(lambda: self.mode(1))
         self.mode2.clicked.connect(lambda: self.mode(2))
 
-    def mode(self,game_mode):
+    def mode(self, game_mode):
         """ A function to determine what mode the user wants to play in """
         self.game_mode = game_mode
-        print(self.game_mode)
+        print('Game Mode: ', self.game_mode)
         self.mode1.deleteLater()
         self.mode2.deleteLater()
         if game_mode == 2: 
-            self.random_list = list(range(9)) # For logic when playing with computer
-       
+            self.square_list = list(range(9)) # For logic when playing with computer
     
-    
-    def click(self,btn,pos):
+    def click(self, btn, pos):
         """ A function that is invoked when buttons are clicked """
         if self.game_mode == 1:
             self.two_player(btn,pos) 
         elif self.game_mode == 2:
             self.vsCmp(btn,pos)    
 
-    def two_player(self,btn,pos):
+    def two_player(self, btn, pos):
         """ A function that is invoked when the game is on 2player mode and a button in the board is clicked """
-        if self.counter % 2 == 0:
+        if self.move_counter % 2 == 0:
             btn.setText("X")
             btn.setEnabled(False)
             self.label.setText("O's turn!")
-            self.lst[pos]="X"
-            self.win(self.lst,"X")
+            self.board[pos]="X"
+            self.win(self.board,"X")
         else:
             btn.setText("O")
             btn.setEnabled(False)
             self.label.setText("X's turn")
-            self.lst[pos]="O"
-            self.win(self.lst,"O")
+            self.board[pos]="O"
+            self.win(self.board,"O")
     
-        print(self.lst)
-        self.counter += 1  # incrementing the counter after each move
+        print(self.board)
+        self.move_counter += 1  # incrementing the counter after each move
 
-    def vsCmp(self,btn,pos):
+    def vsCmp(self, btn, pos):
         """ A function that is invoked when the game is on vs Computer mode and a button in the board is clicked"""
         btn.setText("X")
         btn.setEnabled(False)
         self.label.setText("X's turn!")
-        self.lst[pos]="X"
-        self.random_list.remove(pos)
-        self.win(self.lst,"X")
-        print(self.lst)
+        self.board[pos]="X"
+        self.square_list.remove(pos)
+        self.win(self.board,"X")
+        print(self.board)
         if self.flag:
-            print(self.random_list,"random list before picking")
-            if self.random_list:
-                pick = random.choice(self.random_list)
-                self.random_list.remove(pick)
-                print(self.random_list,"random list after picking")
-                eval(f"self.btn{pick+1}").setText("O") 
-                eval(f"self.btn{pick+1}").setEnabled(False)
-                self.lst[pick] = "O"
-                self.win(self.lst,"O")      
+            print('move_counter = ', self.move_counter)
+            print(self.square_list,"random list before picking")
+            if self.move_counter == 4:
+                self.flag == False
+                return
+            pick = self.move_decision(pos)
+            self.square_list.remove(pick)
+            print(self.square_list,"random list after picking")
+            eval(f"self.btn{pick+1}").setText("O") 
+            eval(f"self.btn{pick+1}").setEnabled(False)
+            self.board[pick] = "O"
+            self.win(self.board,"O")    
+            self.move_counter += 1  
 
-    def win(self,lst,player):
+    def move_decision(self, pos):
+        board = np.array(self.board).reshape(3,3)
+        print(board)
+        if self.move_counter == 0:
+            if (pos == 0 or pos == 2 or pos == 6 or pos == 8) and self.move_counter == 0:
+                pick = self.square_list[4]
+            elif pos == 4 and self.move_counter == 0:
+                pick = random.choice(self.square_list[0:3:2] + self.square_list[5:8:2])      
+            else:
+                pick = random.choice(self.square_list)   
+        else:
+            threat_square = self.find_threat_square(board)
+            if threat_square:
+                pick = int(threat_square)
+                print('picked square: ', pick)
+                # TODO
+            else: #self.square_list:
+                pick = random.choice(self.square_list) 
+        return pick
+
+    def find_threat_square(self,board):
+        for i in range(3):
+            row = board[i]
+            col = board[:,i] 
+            row_threat_square = self.check_line_threat(row)
+            col_threat_square = self.check_line_threat(col)
+            if row_threat_square:
+                return row_threat_square
+            elif col_threat_square:
+                return col_threat_square
+
+        diag1_threat_square = self.check_line_threat(np.diag(board))
+        if diag1_threat_square:
+            return diag1_threat_square
+
+        diag2_threat_square = self.check_line_threat(np.diag(np.fliplr(board)))
+        if diag2_threat_square:
+            return diag2_threat_square
+
+        return False
+
+    def check_line_threat(self, line):
+        """ A function to check the row, column and diagonal threats """
+        if np.sum(line == 'X') == 2 and np.sum(line == 'O') == 0:
+            for j in range(3):
+                if line[j] != 'X':
+                    return line[j]
+        return False
+
+    def win(self, lst, player):
         """ A function to check if the winning condition occured """
         if self.check_horizontal(lst) or self.check_vertical(lst) or self.check_diagonal(lst):
             self.label.setText(f"{player} won!")
@@ -200,7 +252,7 @@ class Window(QMainWindow):
                 button.setEnabled(False)
             self.flag = False       
 
-    def check_horizontal(self,lst):
+    def check_horizontal(self, lst):
         """ Subfunction of win() which checks horizontals """
         for i in range(3):
             if lst[i] == lst[i+3] == lst[i+6]:
@@ -208,7 +260,7 @@ class Window(QMainWindow):
                 print(self.win_lst)
                 return True
 
-    def check_vertical(self,lst):
+    def check_vertical(self, lst):
         """ Subfunction of win() which checks verticals """
         for i in range(0,7,3):
             if lst[i] == lst[i+1] == lst[i+2]:
@@ -216,7 +268,7 @@ class Window(QMainWindow):
                 print(self.win_lst)
                 return True
 
-    def check_diagonal(self,lst):
+    def check_diagonal(self, lst):
         """ Subfunction of win() which checks diagonals """
         if lst[0] == lst[4] == lst[8]:
             self.win_lst.extend([0,4,8])
@@ -233,8 +285,8 @@ class Window(QMainWindow):
             button.setText("")
             button.setEnabled(True)
 
-        self.lst = list(range(9))
-        self.random_list = list(range(9))
+        self.board = list(range(9))
+        self.square_list = list(range(9))
         self.label.setText("X's turn")
 
         # Clearing and reseting
@@ -242,15 +294,16 @@ class Window(QMainWindow):
             for i in range(3):
                 eval(f"self.btn{str(self.win_lst[i]+1)}").setStyleSheet("QPushButton {color: #ff4747;}")
         
-        self.counter = 0
+        self.move_counter = 0
         self.win_lst = []
         self.flag = True
 
 
-def start():
+def main():
     app = QApplication(sys.argv)
     game_window = Window()
     game_window.show()
     app.exec_()
 
-start()    
+if __name__ == '__main__':
+    main()    
