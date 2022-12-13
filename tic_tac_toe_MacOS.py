@@ -128,113 +128,262 @@ class Window(QMainWindow):
         self.mode1.clicked.connect(lambda: self.mode(1))
         self.mode2.clicked.connect(lambda: self.mode(2))
 
-    def mode(self,game_mode):
-        """ A function to determine what mode the user wants to play in """
+    def mode(self, game_mode):
+        """Selects the mode the user wants to play in
+        Args:
+            game_mode (int): 1-two_player mode, 2-VS computer mode
+        Returns:
+            None
+        """
+
         self.game_mode = game_mode
-        print(self.game_mode)
+        print('Game Mode: ', self.game_mode)
         self.mode1.deleteLater()
         self.mode2.deleteLater()
+
         if game_mode == 2: 
-            self.random_list = list(range(9)) # For logic when playing with computer
-       
+            self.square_list = list(range(9)) # For logic when playing with computer
     
-    
-    def click(self,btn,pos):
-        """ A function that is invoked when buttons are clicked """
+    def click(self, btn, pos):
+        """Manages the game process
+        Args:
+            btn (QPushButton): Button for clicking and playing
+            pos (int): The assigned number of every button for controlling it
+        Returns:
+            None
+        """
+
         if self.game_mode == 1:
             self.two_player(btn,pos) 
         elif self.game_mode == 2:
             self.vsCmp(btn,pos)    
 
-    def two_player(self,btn,pos):
-        """ A function that is invoked when the game is on 2player mode and a button in the board is clicked """
-        if self.counter % 2 == 0:
+    def two_player(self, btn, pos):
+        """Manages the game process when playing in two_player and a button on the board is clicked
+        Args:
+            btn (QPushButton): Button for clicking and playing
+            pos (int): The assigned number of every button for controlling it
+        Returns:
+            None
+        """
+
+        if self.move_counter % 2 == 0:
             btn.setText("X")
             btn.setEnabled(False)
             self.label.setText("O's turn!")
-            self.lst[pos]="X"
-            self.win(self.lst,"X")
+            self.board[pos]="X"
+            self.win(self.board,"X")
+
         else:
             btn.setText("O")
             btn.setEnabled(False)
             self.label.setText("X's turn")
-            self.lst[pos]="O"
-            self.win(self.lst,"O")
+            self.board[pos]="O"
+            self.win(self.board,"O")
     
-        print(self.lst)
-        self.counter += 1  # incrementing the counter after each move
+        print(self.board)
+        self.move_counter += 1  # incrementing the counter after each move
 
-    def vsCmp(self,btn,pos):
-        """ A function that is invoked when the game is on vs Computer mode and a button in the board is clicked"""
+    def vsCmp(self, btn, pos):
+        """Manages the game process when playing in vs Computer mode and a button on the board is clicked
+        Args:
+            btn (QPushButton): Button for clicking and playing
+            pos (int): The assigned number of every button for controlling it
+        Returns:
+            None
+        """
+        
         btn.setText("X")
         btn.setEnabled(False)
         self.label.setText("X's turn!")
-        self.lst[pos]="X"
-        self.random_list.remove(pos)
-        self.win(self.lst,"X")
-        print(self.lst)
-        if self.flag:
-            print(self.random_list,"random list before picking")
-            if self.random_list:
-                pick = random.choice(self.random_list)
-                self.random_list.remove(pick)
-                print(self.random_list,"random list after picking")
-                eval(f"self.btn{pick+1}").setText("O") 
-                eval(f"self.btn{pick+1}").setEnabled(False)
-                self.lst[pick] = "O"
-                self.win(self.lst,"O")      
+        self.board[pos]="X"
+        self.square_list.remove(pos)
+        self.win(self.board,"X")
+        print(self.board)
 
-    def win(self,lst,player):
-        """ A function to check if the winning condition occured """
-        if self.check_horizontal(lst) or self.check_vertical(lst) or self.check_diagonal(lst):
+        if self.flag:
+            print('move_counter = ', self.move_counter)
+            print(self.square_list,"random list before picking")
+
+            if self.move_counter == 4:
+                self.flag == False
+                return
+
+            pick = self.move_decision(pos)
+            self.square_list.remove(pick)
+            print(self.square_list,"random list after picking")
+            eval(f"self.btn{pick+1}").setText("O") 
+            eval(f"self.btn{pick+1}").setEnabled(False)
+            self.board[pick] = "O"
+            self.win(self.board,"O")    
+            self.move_counter += 1  
+
+    def move_decision(self, pos):
+        """Decides the next move playing optimal strategy
+        Args:
+            pos (int): The last position where the players put an X
+        Returns:
+            pick (int): The square that the algorithm picked as current best move
+        """
+
+        board = np.array(self.board).reshape(3,3)
+        print(board)
+        if self.move_counter == 0:
+            if (pos == 0 or pos == 2 or pos == 6 or pos == 8) and self.move_counter == 0:
+                pick = self.square_list[4]
+            elif pos == 4 and self.move_counter == 0:
+                pick = random.choice(self.square_list[0:3:2] + self.square_list[5:8:2])      
+            else:
+                pick = random.choice(self.square_list)   
+
+        else:
+            threat_square = self.find_threat_square(board)
+            if threat_square:
+                pick = int(threat_square)
+                print('picked square: ', pick)
+                # TODO
+            else: #self.square_list:
+                pick = random.choice(self.square_list) 
+
+        return pick
+
+    def find_threat_square(self,board):
+        """A function that finds if there are any row, column or diagonal threats
+        Args:
+            board (ndarray): A 3x3 ndarray representing the board
+        Returns:
+            row_threat_square (int): The square where there is a row threat
+            col_threat_square (int): The square where there is a column threat
+            diag1_threat_square (int): The square where there is a diagonal threat
+            diag2_threat_square (int): The square where there is a diagonal threat
+        """
+
+        for i in range(3):
+            row = board[i]
+            col = board[:,i] 
+            row_threat_square = self.check_line_threat(row)
+            col_threat_square = self.check_line_threat(col)
+            if row_threat_square:
+                return row_threat_square
+            elif col_threat_square:
+                return col_threat_square
+
+        diag1_threat_square = self.check_line_threat(np.diag(board))
+        if diag1_threat_square:
+            return diag1_threat_square
+
+        diag2_threat_square = self.check_line_threat(np.diag(np.fliplr(board)))
+        if diag2_threat_square:
+            return diag2_threat_square
+
+        return False
+
+    def check_line_threat(self, line):
+        """A function to check the row, column and diagonal threats
+        
+        Args:
+            line (ndarray): row, column or diagonal
+        Returns:
+            line[j] (int): threat square
+            False (bool): A boolean value if there is no threat 
+        """
+
+        if np.sum(line == 'X') == 2 and np.sum(line == 'O') == 0:
+            for j in range(3):
+                if line[j] != 'X':
+                    return line[j]
+        return False
+
+    def win(self, board, player):
+        """Checks if the winning condition occured
+        Args:
+            board (ndarray): The 3x3 game board
+            player (str): "X" or "O"
+        Returns:
+            None (Changes the global flag for controlling the game process)
+        """
+
+        if self.check_horizontal(board) or self.check_vertical(board) or self.check_diagonal(board):
             self.label.setText(f"{player} won!")
+
             if player == "X":
                 self.winX += 1
             else:
                 self.winY += 1
             self.score_1.setText(f"{self.winX}")
             self.score_2.setText(f"{self.winY}")
+
             for i in range(3):
                 eval(f"self.btn{str(self.win_lst[i]+1)}").setStyleSheet("QPushButton {color: #ff0000;}")
+
             for button in self.button_list:
                 button.setEnabled(False)
+
             self.flag = False       
 
-    def check_horizontal(self,lst):
-        """ Subfunction of win() which checks horizontals """
+    def check_horizontal(self, board):
+        """Helper of win() that checks horizontals
+        
+        Args:
+            board (ndarray): The 3x3 game board
+        Returns:
+            True (bool): If the winning condition on the diagonal was achieved
+        """
         for i in range(3):
-            if lst[i] == lst[i+3] == lst[i+6]:
+            if board[i] == board[i+3] == board[i+6]:
                 self.win_lst.extend([i,i+3,i+6])
                 print(self.win_lst)
                 return True
 
-    def check_vertical(self,lst):
-        """ Subfunction of win() which checks verticals """
+    def check_vertical(self, board):
+        """Helper of win() that checks horizontals
+        
+        Args:
+            board (ndarray): The 3x3 game board
+        
+        Returns:
+            True (bool): If the winning condition on the vertical was achieved
+        """
+
         for i in range(0,7,3):
-            if lst[i] == lst[i+1] == lst[i+2]:
+            if board[i] == board[i+1] == board[i+2]:
                 self.win_lst.extend([i,i+1,i+2])
                 print(self.win_lst)
                 return True
 
-    def check_diagonal(self,lst):
-        """ Subfunction of win() which checks diagonals """
+    def check_diagonal(self, lst):
+        """Helper of win() that checks horizontals
+        
+        Args:
+            board (ndarray): The 3x3 game board
+        Returns:
+            True (bool): If the winning condition on the diagonal was achieved
+        """
+
         if lst[0] == lst[4] == lst[8]:
             self.win_lst.extend([0,4,8])
             print(self.win_lst)
             return True
+
         elif lst[2] == lst[4] == lst[6]:
             self.win_lst.extend([2,4,6])
             print(self.win_lst)
             return True    
 
     def reset(self):
-        """ A function that resets all the elements in the game window """
+        """Resets all the elements in the game window
+        Args:
+            None
+        Returns:
+            None
+        """
+
         for button in self.button_list:
             button.setText("")
             button.setEnabled(True)
 
-        self.lst = list(range(9))
-        self.random_list = list(range(9))
+        self.board = list(range(9))
+        self.square_list = list(range(9))
         self.label.setText("X's turn")
 
         # Clearing and reseting
@@ -242,15 +391,16 @@ class Window(QMainWindow):
             for i in range(3):
                 eval(f"self.btn{str(self.win_lst[i]+1)}").setStyleSheet("QPushButton {color: #ff4747;}")
         
-        self.counter = 0
+        self.move_counter = 0
         self.win_lst = []
         self.flag = True
 
 
-def start():
+def main():
     app = QApplication(sys.argv)
     game_window = Window()
     game_window.show()
     app.exec_()
 
-start()    
+if __name__ == '__main__':
+    main()
