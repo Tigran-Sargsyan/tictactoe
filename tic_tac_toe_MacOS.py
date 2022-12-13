@@ -1,8 +1,10 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QFont
 import sys
 import random
+import numpy as np
+
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtGui import QFont,QIcon
 
 class Window(QMainWindow):
     def __init__(self):
@@ -13,12 +15,14 @@ class Window(QMainWindow):
         self.setMinimumSize(462,570)
         self.setMaximumSize(462,570)
         self.setWindowTitle("TicTacToe")
+        self.setWindowIcon(QIcon("icon.jpg"))
 
-        self.counter = 0  # A counter to determine whose move it is
+
+        self.move_counter = 0  # A counter to determine whose move it is
         self.flag = True  # A flag to tell if a game is still in process
         self.game_mode = 0 # A variable for holding the mode of the game (1: 2Player, 2:vs Computer)
 
-        self.lst = list(range(9)) # Defining a list with values [0,8] for storing X-s and O-s 
+        self.board = list(range(9)) # Defining a list with values [0,8] for storing X-s and O-s 
         
         self.win_lst = [] # Defining a list to hold the winning squares
 
@@ -30,33 +34,37 @@ class Window(QMainWindow):
 
     def initUI(self):
         """Creating buttons,setting geometry,text in the buttons,styling"""
-
         self.btn1 = QtWidgets.QPushButton(self) # btn1 to btn9 are the squares of the playing board
-        self.btn1.setGeometry(5,10,150,100)
         self.btn2 = QtWidgets.QPushButton(self)
-        self.btn2.setGeometry(156,10,150,100)
         self.btn3 = QtWidgets.QPushButton(self)
-        self.btn3.setGeometry(307,10,150,100)
         self.btn4 = QtWidgets.QPushButton(self)
-        self.btn4.setGeometry(5,111,150,100)
         self.btn5 = QtWidgets.QPushButton(self)
-        self.btn5.setGeometry(156,111,150,100)
         self.btn6 = QtWidgets.QPushButton(self)
-        self.btn6.setGeometry(307,111,150,100)
         self.btn7 = QtWidgets.QPushButton(self)
-        self.btn7.setGeometry(5,212,150,100)
         self.btn8 = QtWidgets.QPushButton(self)
-        self.btn8.setGeometry(156,212,150,100)
         self.btn9 = QtWidgets.QPushButton(self)
+        
+
+        self.btn1.setGeometry(5,10,150,100)
+        self.btn2.setGeometry(156,10,150,100)
+        self.btn3.setGeometry(307,10,150,100)
+        self.btn4.setGeometry(5,111,150,100)
+        self.btn5.setGeometry(156,111,150,100)
+        self.btn6.setGeometry(307,111,150,100)
+        self.btn7.setGeometry(5,212,150,100)
+        self.btn8.setGeometry(156,212,150,100)
         self.btn9.setGeometry(307,212,150,100)
+
         self.btn10 = QtWidgets.QPushButton(self)  # btn10 is clicked when the user wants to play again
         self.btn10.setGeometry(0,410,462,50)
         self.btn10.setText("Play again")
-        self.btn10.setFont(QFont('Times', 30)) 
+        self.btn10.setFont(QFont('Times', 30))
+
         self.mode1 = QtWidgets.QPushButton(self)
         self.mode1.setGeometry(0,470,150,60)
         self.mode1.setText("2 Player") # If the user wants 2 player mode
         self.mode1.setFont(QFont('Times', 20)) 
+        
         self.mode2 = QtWidgets.QPushButton(self)
         self.mode2.setGeometry(312,470,150,60)
         self.mode2.setText("vs Computer") # If the user wants to play against the computer
@@ -84,18 +92,22 @@ class Window(QMainWindow):
         self.label.setGeometry(350,330,120,60)
         self.label.setText("X's turn")
         self.label.setStyleSheet("QLabel{font-size: 30pt;}")
+
         self.player1 = QtWidgets.QLabel(self) # player1 and player2 labels store how many games has each player won
         self.player1.setGeometry(10,330,70,30)      
         self.player1.setText("Player1: ")
         self.player1.setStyleSheet("QLabel{font-size: 18pt;}")
+
         self.player2 = QtWidgets.QLabel(self)
         self.player2.setGeometry(10,370,70,30)
         self.player2.setText("Player2: ")
         self.player2.setStyleSheet("QLabel{font-size: 18pt;}")
+        
         self.score_1 = QtWidgets.QLabel(self) # score1 and score2 for keeping the score
         self.score_1.setGeometry(75,339,15,15)
         self.score_1.setText("0")  
         self.score_1.setStyleSheet("QLabel{font-size: 18pt;}")
+        
         self.score_2 = QtWidgets.QLabel(self)
         self.score_2.setGeometry(75,379,15,15)
         self.score_2.setText("0")
@@ -130,10 +142,13 @@ class Window(QMainWindow):
 
     def mode(self, game_mode):
         """Selects the mode the user wants to play in
+
         Args:
             game_mode (int): 1-two_player mode, 2-VS computer mode
+        
         Returns:
             None
+        
         """
 
         self.game_mode = game_mode
@@ -146,11 +161,14 @@ class Window(QMainWindow):
     
     def click(self, btn, pos):
         """Manages the game process
+        
         Args:
             btn (QPushButton): Button for clicking and playing
             pos (int): The assigned number of every button for controlling it
+        
         Returns:
             None
+        
         """
 
         if self.game_mode == 1:
@@ -160,11 +178,14 @@ class Window(QMainWindow):
 
     def two_player(self, btn, pos):
         """Manages the game process when playing in two_player and a button on the board is clicked
+        
         Args:
             btn (QPushButton): Button for clicking and playing
             pos (int): The assigned number of every button for controlling it
+        
         Returns:
             None
+        
         """
 
         if self.move_counter % 2 == 0:
@@ -186,11 +207,14 @@ class Window(QMainWindow):
 
     def vsCmp(self, btn, pos):
         """Manages the game process when playing in vs Computer mode and a button on the board is clicked
+        
         Args:
             btn (QPushButton): Button for clicking and playing
             pos (int): The assigned number of every button for controlling it
+        
         Returns:
             None
+        
         """
         
         btn.setText("X")
@@ -220,10 +244,13 @@ class Window(QMainWindow):
 
     def move_decision(self, pos):
         """Decides the next move playing optimal strategy
+        
         Args:
             pos (int): The last position where the players put an X
+        
         Returns:
             pick (int): The square that the algorithm picked as current best move
+        
         """
 
         board = np.array(self.board).reshape(3,3)
@@ -249,13 +276,16 @@ class Window(QMainWindow):
 
     def find_threat_square(self,board):
         """A function that finds if there are any row, column or diagonal threats
+        
         Args:
             board (ndarray): A 3x3 ndarray representing the board
+        
         Returns:
             row_threat_square (int): The square where there is a row threat
             col_threat_square (int): The square where there is a column threat
             diag1_threat_square (int): The square where there is a diagonal threat
             diag2_threat_square (int): The square where there is a diagonal threat
+        
         """
 
         for i in range(3):
@@ -283,9 +313,11 @@ class Window(QMainWindow):
         
         Args:
             line (ndarray): row, column or diagonal
+        
         Returns:
             line[j] (int): threat square
             False (bool): A boolean value if there is no threat 
+        
         """
 
         if np.sum(line == 'X') == 2 and np.sum(line == 'O') == 0:
@@ -296,11 +328,14 @@ class Window(QMainWindow):
 
     def win(self, board, player):
         """Checks if the winning condition occured
+        
         Args:
             board (ndarray): The 3x3 game board
             player (str): "X" or "O"
+        
         Returns:
             None (Changes the global flag for controlling the game process)
+        
         """
 
         if self.check_horizontal(board) or self.check_vertical(board) or self.check_diagonal(board):
@@ -326,8 +361,10 @@ class Window(QMainWindow):
         
         Args:
             board (ndarray): The 3x3 game board
+
         Returns:
             True (bool): If the winning condition on the diagonal was achieved
+        
         """
         for i in range(3):
             if board[i] == board[i+3] == board[i+6]:
@@ -343,6 +380,7 @@ class Window(QMainWindow):
         
         Returns:
             True (bool): If the winning condition on the vertical was achieved
+        
         """
 
         for i in range(0,7,3):
@@ -356,8 +394,10 @@ class Window(QMainWindow):
         
         Args:
             board (ndarray): The 3x3 game board
+        
         Returns:
             True (bool): If the winning condition on the diagonal was achieved
+        
         """
 
         if lst[0] == lst[4] == lst[8]:
@@ -372,10 +412,13 @@ class Window(QMainWindow):
 
     def reset(self):
         """Resets all the elements in the game window
+        
         Args:
             None
+        
         Returns:
             None
+        
         """
 
         for button in self.button_list:
