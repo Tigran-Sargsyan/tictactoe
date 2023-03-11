@@ -22,4 +22,7 @@ If a player wins, the game will end and a score will be updated. You can start a
 * Option to start a new game at any time
 * The computer makes intelligent moves based on game strategy
 
-You can download and view the gameplay videos: 2 player.mkv and vs computer.mkv !
+## Demo videos
+
+* 2 player mode:    https://www.youtube.com/watch?v=PcvnExLdLZE
+* vs computer mode:   https://www.youtube.com/watch?v=AXyMPE092w8
